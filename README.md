@@ -5,9 +5,9 @@ Converts Machine Code to x86 (32-bit) Linux executable (auto-wrapping with ELF h
 
 Command Usage
 =====
-Options:
---in (input file)
---out (output file)
+Options:<br>
+--in (input file)<br>
+--out (output file)<br>
 --binary (if the input is already binary form)
 
 m2elf --in source_file.m --out executable_file
