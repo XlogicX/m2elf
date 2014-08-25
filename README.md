@@ -30,8 +30,22 @@ Same Source File without Comments
 b8        55555555<br>
 34        10101010<br>
 
-Upcoming Features / BugFixes
+Hello World Example
 =====
-This code is super fresh, so it has some issues and lacks some critical features
-* (Feature) This currently does not support memory allocation for program (.bss). This is a fairly critical feature that will eventually be added
-* (Feature) 64-bit...maybe. I might not care enough about this.
+b8		21 0a 00 00			#moving "!\n" into eax<br>
+a3		0c 10 00 06			#moving eax into first memory location<br>
+b8 		6f 72 6c 64			#moving "orld" into eax<br>
+a3		08 10 00 06			#moving eax into next memory location<br>
+b8 		6f 2c 20 57			#moving "o, W" into eax<br>
+a3		04 10 00 06			#moving eax into next memory location<br>
+b8 		48 65 6c 6c			#moving "Hell" into eax<br>
+a3		00 10 00 06			#moving eax into next memory location<br>
+<br>
+b9  	00 10 00 06			#moving pointer to start of memory location into ecx<br>
+ba  	10 00 00 00			#moving string size into edx<br>
+bb  	01 00 00 00			#moving "stdout" number to ebx<br>
+b8  	04 00 00 00			#moving "print out" syscall number to eax<br>
+cd  	80					    #calling the linux kernel to execute our print to stdout<br>
+            <br>
+b8		01 00 00 00			#moving "sys_exit" call number to eax<br>
+cd		80					    #executing it via linux sys_call<br>
