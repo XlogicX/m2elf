@@ -33,6 +33,5 @@ b8        55555555<br>
 Upcoming Features / BugFixes
 =====
 This code is super fresh, so it has some issues and lacks some critical features
-* (Bug) some of the offsets in the ELF headers aren't dynamic yet (although execution of code still works just fine regardless)
 * (Feature) This currently does not support memory allocation for program (.bss). This is a fairly critical feature that will eventually be added
 * (Feature) 64-bit...maybe. I might not care enough about this.
