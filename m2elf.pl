@@ -161,7 +161,10 @@ sub convert {
 	#Find 8-bit binary strings and convert to ascii-hex
 	while ($code =~ /[^01]([01]{8})[^01]/) {
 		my $replacement = sprintf('%X', oct("0b$1"));
-		$code =~ s/([^01])[01]{8}([^01])/$1$replacement$2/;
+		if (length($replacement) == 1) {
+			$replacement = "0" . $replacement;
+		}
+		$code =~ s/([^01])[01]{8}([^01])/$1 $replacement $2/;
 	}
 	$code =~ s/\s//g;						#remove spaces
 
