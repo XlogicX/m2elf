@@ -8,11 +8,12 @@ use Getopt::Long;
 my ($in, $binary, $hex, $code);
 my $out = "out";
 my $temp_data;
-my $memory_size = 64;
+my $memory_size = 0;
 
 GetOptions('in=s' => \$in,
 'out=s' => \$out,
-'binary' => \$binary);
+'binary' => \$binary,
+'mem=s' => \$memory_size);
 
 #--------------------------Code/Strings/Sections------------------------------------
 if ($in) {
