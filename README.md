@@ -9,8 +9,9 @@ Options:<br>
 --in (input file)<br>
 --out (output file)<br>
 --binary (if the input is already binary form)
+--mem (bytes)
 
-m2elf --in source_file.m --out executable_file
+m2elf --in source_file.m --out executable_file --mem 100
 
 Source File Syntax
 =====
