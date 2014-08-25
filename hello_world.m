@@ -11,7 +11,7 @@ b9  	00 10 00 06			#moving pointer to start of memory location into ecx
 ba  	10 00 00 00			#moving string size into edx
 bb  	01 00 00 00			#moving "stdout" number to ebx
 b8  	04 00 00 00			#moving "print out" syscall number to eax
-cd  	80			#calling the linux kernel to execute our print to stdout
+cd  	80			            #calling the linux kernel to execute our print to stdout
             
 b8	01 00 00 00			#moving "sys_exit" call number to eax
-cd	80			#executing it via linux sys_call
+cd	80			            #executing it via linux sys_call
