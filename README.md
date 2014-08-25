@@ -8,7 +8,7 @@ Command Usage
 Options:<br>
 --in (input file)<br>
 --out (output file)<br>
---binary (if the input is already binary form)
+--binary (if the input is already binary form)<br>
 --mem (bytes)
 
 m2elf --in source_file.m --out executable_file --mem 100
