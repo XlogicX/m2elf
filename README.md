@@ -12,6 +12,7 @@ Options:<br>
 --mem (bytes)
 
 m2elf --in source_file.m --out executable_file --mem 100
+(chmod 755 executable_file)
 
 Example Source Files
 =====
