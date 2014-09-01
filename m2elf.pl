@@ -12,13 +12,19 @@ my $temp_data;
 my $memory_size = 0;
 my $entry = 0;
 my $writeover = 0;
+my $help = 0;
 
 GetOptions('in=s' => \$in,
 'out=s' => \$out,
 'binary' => \$binary,
 'mem=s' => \$memory_size,
 'entry=s' => \$entry,
-'writeover' => \$writeover);
+'writeover' => \$writeover,
+'help' => \$help);
+
+if ($help eq 1){
+	help();
+}
 
 #--------------------------Code/Strings/Sections------------------------------------
 if ($in) {
@@ -191,4 +197,39 @@ sub convert {
 	}
 	$code = $temp_code;
 
+}
+
+sub help {
+print "NAME\n";
+print "\tm2elf - Machine Code to ELF wrapped executable binary\n\n";
+print "SYNOPSIS\n";
+print "\tm2elf.pl --in inputfile --out outputfile\n\n";
+print "DESCRIPTION\n";
+print "\tThis script takes ascii-hex, space delimited chunks of 8 1' and 0's, or a binary file as input and crafts an appropriate ELF header to make this machine code executable on Linux (32-bit).\n\n";
+print "OPTIONS\n";
+print "\t--in: specify your source file after this\n";
+print "\t--out: specify the name you want your executable file to be\n";
+print "\t--binary: if your file is raw (binary file with unprintables; already machine code), then supply this option. This option is great for extractions from pcaps\n";
+print "\t--mem: specify how many bytes of memory you want after this option, it will map starting at offset 0x06000000\n";
+print "\t--entry: you can change the entry point. The default is 0x08000060. Whichever number you specify, will add that amount of bytes to the default offset. It will not shift the beginning of your code to that offset, however. For example, if you supply --entry 16, add 16 NOPs to the begginning of your original code and it will function as if you didn't add the --entry 16 and the NOPs\n";
+print "\t--writeover: changes the r-x of the .text to rwx; now you can have self modifying codes\n\n";
+print "EXAMPLES\n";
+print "\tSOURCE:\n";
+print "\tb8\t21 0a 00 00\t#moving '!\\n' into eax\n";
+print "\ta3\t0c 10 00 06\t#moving eax into first memory location\n";
+print "\tb8\t6f 72 6c 64\t#moving 'orld' into eax\n";
+print "\ta3\t08 10 00 06\t#moving eax into next memory location\n";
+print "\tb8\t6f 2c 20 57\t#moving 'o, W' into eax\n";
+print "\ta3\t04 10 00 06\t#moving eax into next memory location\n";
+print "\tb8\t48 65 6c 6c\t#moving 'Hell' into eax\n";
+print "\ta3\t00 10 00 06\t#moving eax into next memory location\n";
+print "\tb9\t00 10 00 06\t#moving pointer to start of memory location into ecx\n";
+print "\tba\t10 00 00 00\t#moving string size into edx\n";
+print "\tbb\t01 00 00 00\t#moving 'stdout' number to ebx\n";
+print "\tb8\t04 00 00 00\t#moving 'print out' syscall number to eax\n";
+print "\tcd\t80\t\t#calling the linux kernel to execute our print to stdout\n";
+print "\tb8\t01 00 00 00\t#moving 'sys_exit' call number to eax\n";
+print "\tcd\t80\t\t#executing it via linux sys_call\n\n";
+print "\tAssemble with: m2elf.pl --in inputfile --out outputfile --mem 16\n\n";
+exit;
 }
