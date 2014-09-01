@@ -1,6 +1,7 @@
 #!/usr/bin/perl
-#ELF construction based on reversing done by Ange Albertini from corkami.com (great infographic)
-#http://man7.org/linux/man-pages/man5/elf.5.html also has very useful info
+#ELF construction based on reversing done by Ange Albertini from corkami.com (great infographic),
+#http://man7.org/linux/man-pages/man5/elf.5.html, and just assembling stuff with nasm and comparing results.
+#These files generated may not be 'proper,' but they seem execute pretty well.
 use warnings;
 use strict;
 use Getopt::Long;
@@ -10,12 +11,14 @@ my $out = "out";
 my $temp_data;
 my $memory_size = 0;
 my $entry = 0;
+my $writeover = 0;
 
 GetOptions('in=s' => \$in,
 'out=s' => \$out,
 'binary' => \$binary,
 'mem=s' => \$memory_size,
-'entry=s' => \$entry);
+'entry=s' => \$entry,
+'writeover' => \$writeover);
 
 #--------------------------Code/Strings/Sections------------------------------------
 if ($in) {
@@ -91,6 +94,11 @@ my $p_filesz = "\x00\x00\x00\x00"; 				#Size on File
 my $p_memsz = "\x00\x00\x00\x00"; 				#Size in memory
 my $p_flags = "\x05\x00\x00\x00"; 				#Readable and eXecutable
 
+#If we LOVE self modifying code, put your hands up!
+if ($writeover eq 1) {
+	$p_flags = "\x06\x00\x00\x00";
+}
+
 #Give
 $p_filesz = printhex_32(length($code) + 160);
 $p_memsz = $p_filesz;
@@ -165,10 +173,6 @@ sub printhex_32 {
 
 sub convert {
 	my $temp_code = '';
-	#If user wants different entry point, add some NOP padding
-	if ($entry > 0){
-		$code = "90 " x $entry . "\n" . $code;
-	}
 	$code =~ s/(.*)(#|\/\/|'|\-\-).*/$1/g;	#remove comments
 	#Find 8-bit binary strings and convert to ascii-hex
 	while ($code =~ /[^01]([01]{8})[^01]/) {
