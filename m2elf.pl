@@ -9,11 +9,13 @@ my ($in, $binary, $hex, $code);
 my $out = "out";
 my $temp_data;
 my $memory_size = 0;
+my $entry = 0;
 
 GetOptions('in=s' => \$in,
 'out=s' => \$out,
 'binary' => \$binary,
-'mem=s' => \$memory_size);
+'mem=s' => \$memory_size,
+'entry=s' => \$entry);
 
 #--------------------------Code/Strings/Sections------------------------------------
 if ($in) {
@@ -109,7 +111,7 @@ my $e_ident_EI_VERSION = "\x01\x00\x00\x00";	#Always 1
 my $e_type = "\x02\x00"; 						#Executable
 my $e_machine = "\x03\x00";						#Intel 386 (and later)
 my $e_version = "\x01\x00\x00\x00"; 			#Always 1
-my $e_entry = "\x60\x00\x00\x08";
+my $e_entry = "\x60\x00\x00\x08";				#Entry Point
 my $e_phoff = "\x40\x00\x00\x00";				#Program Headers' offset
 my $e_shoff = "\x00\x00\x00\x00";				#Section Header's offset, 0'd out for now, calculated later
 my $e_ehsize = "\x34\x00";						#ELF header's size
@@ -123,6 +125,12 @@ if ($memory_size > 0) {
 	$e_shstrndx = "\x03\x00";
 	$e_phnum = "\x02\x00";
 	$e_entry = "\x80\x00\x00\x08";	
+}
+
+#Change entry point if user wants this
+if ($entry > 0) {
+	$entry += 134217824;
+	$e_entry = printhex_32($entry);
 }
 
 #Calculate e_shoff size
@@ -157,6 +165,10 @@ sub printhex_32 {
 
 sub convert {
 	my $temp_code = '';
+	#If user wants different entry point, add some NOP padding
+	if ($entry > 0){
+		$code = "90 " x $entry . "\n" . $code;
+	}
 	$code =~ s/(.*)(#|\/\/|'|\-\-).*/$1/g;	#remove comments
 	#Find 8-bit binary strings and convert to ascii-hex
 	while ($code =~ /[^01]([01]{8})[^01]/) {
