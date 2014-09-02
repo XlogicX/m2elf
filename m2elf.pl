@@ -42,76 +42,91 @@ if ($in) {
 	$code = "\x90\x90\x90\x90\x90\x90\xb8\x01\x00\x00\x00\xcd\x80";
 }
 
-#Fix padding of code
+#Fix padding of code; pad code to be divisible by 16 bytes
 $code .= "\x00" x (16 - (length($code) % 16)) if ((length($code) % 16) != 0);
 
 #Section Names
-my $shstrtab_name = "\x00\x2e\x73\x68\x73\x74\x72\x74\x61\x62\x00";
-my $text_name = "\x2e\x74\x65\x78\x74\x00";
-my $bss_name = '';
-my $section_names = '';
-if ($memory_size > 0) {								#If allocating memory
-	$bss_name = "\x2e\x62\x73\x73\x00";
-	$section_names = $shstrtab_name . $text_name . $bss_name . ("\x00" x 10);
-} else {		#Otherwise, build without .bss
-	$section_names = $shstrtab_name . $text_name . ("\x00" x 15);
+my $shstrtab_name = "\x00\x2e\x73\x68\x73\x74\x72\x74\x61\x62\x00"; #null record followed by ".shstrtab"
+my $text_name = "\x2e\x74\x65\x78\x74\x00";							#".text"
+my $bss_name = '';													#Does not exist unless --mem is declared with a value
+my $section_names = '';												#just an init of our section names header
+if ($memory_size > 0) {															#If allocating memory
+	$bss_name = "\x2e\x62\x73\x73\x00";											#".bss"
+	$section_names = $shstrtab_name . $text_name . $bss_name . ("\x00" x 10);	#section names is null+.shstrtab+.text+.bss+10bytes_padding
+} else {																		#Otherwise, build without .bss
+	$section_names = $shstrtab_name . $text_name . ("\x00" x 15);				#So null+.shstrtab+.text and pad 15 bytes
 }
 
 
-
+#Section Header Table
+#Null Section
 my $null = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+
+#Text Section
+#name at offset 0b, type 01, flags 0x06 (allocated & executable), start at addr 0x8000060 / offset 0x60
 my $text = "\x0b\x00\x00\x00\x01\x00\x00\x00\x06\x00\x00\x00\x60\x00\x00\x08\x60\x00\x00\x00";
-if ($memory_size > 0) {
+if ($memory_size > 0) {		#if we allocated memory, change the start at addr to 0x8000080 / offset 0x80
 	$text = "\x0b\x00\x00\x00\x01\x00\x00\x00\x06\x00\x00\x00\x80\x00\x00\x08\x80\x00\x00\x00";
 }
-my $offset = printhex_32(length($code));
-$text .= $offset . "\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00";	
+my $offset = printhex_32(length($code));		#get length of padded code and represent as intel-endian 4-byte structure
+#concatenate headers so far, possible different offset due to memory alloc, structured size, and pretty much null-pad out
+$text .= $offset . "\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00";
 
-my $shrtrtab = '';
-my $bss_header = '';
-my $sections = '';
-if ($memory_size > 0) {
-	$bss_header = "\x11\x00\x00\x00" . "\x08\x00\x00\x00" . "\x03\x00\x00\x00";
-	$offset = printhex_32(100663296);
-	$bss_header .= $offset;
-	$offset = printhex_32(4096);
-	$bss_header .= $offset;
-	$offset = printhex_32($memory_size);
+#Section Names section, but I'll just call this Shitter Tab.
+my $shrtrtab = '';			#init
+my $bss_header = '';		#init
+my $sections = '';			#init
+if ($memory_size > 0) {		#if there's memory,
+	#BSS Header now...
+	$bss_header = "\x11\x00\x00\x00" . "\x08\x00\x00\x00" . "\x03\x00\x00\x00";	#name header starts at 0x11, type 8, flag 3
+	$offset = printhex_32(100663296);	#0x06000000
+	$bss_header .= $offset;				#add the start addr
+	$offset = printhex_32(4096);		#offset 0x1000
+	$bss_header .= $offset;				#add the offset
+	$offset = printhex_32($memory_size);	#add intel-endian bytes for size of bss section
+	#Finally, null pad this header out
 	$bss_header .= $offset . "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00";
 
+	#Now to proceed with the Shitter Tab
+	#name offset starts at 0x01, it's type 3 (string table), no flags (null), no addr
 	$shrtrtab = "\x01\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-	$offset = printhex_32(128 + length($code));
+	$offset = printhex_32(128 + length($code));											#intel-endian offset + 0x80
+	#size is always 0x19 bytes, then null-pad out
 	$shrtrtab .= $offset . "\x19\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00";
 
+	#Glue the .bss version of section header table together
 	$sections = $null . $text . $bss_header . $shrtrtab;
 } else {
+	#Without .bss, the shitter table has an offset of 0xa0
 	$shrtrtab = "\x01\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xa0\x00\x00\x00\x19\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00";
-
+	#Glue the non .bss version of the section header table together
 	$sections = $null . $text . $shrtrtab;
 }
 
 
 #--------------------------Program Header Table setup------------------------------
+#This is all for the .text segment
 my $p_type = "\x01\x00\x00\x00";				#The segment should be loaded into memory
 my $p_offset = "\x00\x00\x00\x00";				#Offset where it should be read
 my $p_addr = "\x00\x00\x00\x08";				#Virtual address where it should be loaded
 my $p_paddr = "\x00\x00\x00\x08"; 				#Physical address where it should be loaded
-my $p_filesz = "\x00\x00\x00\x00"; 				#Size on File
-my $p_memsz = "\x00\x00\x00\x00"; 				#Size in memory
-my $p_flags = "\x05\x00\x00\x00"; 				#Readable and eXecutable
+my $p_flags = "\x05\x00\x00\x00"; 				#Readable and eXecutable (by default)
 
 #If we LOVE self modifying code, put your hands up!
 if ($writeover eq 1) {
 	$p_flags = "\x06\x00\x00\x00";
 }
 
-#Give
-$p_filesz = printhex_32(length($code) + 160);
-$p_memsz = $p_filesz;
+#Give a little extra mem for now, until I actually try and figure this out, but I don't care
+my $p_filesz = printhex_32(length($code) + 160);	#Size on file
+my $p_memsz = $p_filesz;							#Size in memory
 
+#Build the header up
 my $program_header_table = $p_type . $p_offset . $p_addr . $p_paddr . $p_filesz . $p_memsz . $p_flags . "\x00\x10\x00\x00";
 
+#If we want memeory, the below code builds up the .bss segment
 if ($memory_size > 0) {	
+	#Similar headers as .text, but starts at 0x6000000, and flags are rwx by default on this one
 	$program_header_table .= "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x06\x00\x10\x00\x06";
 	$program_header_table .= printhex_32($memory_size) . printhex_32($memory_size);
 	$program_header_table .= "\x06\x00\x00\x00\x00\x10\x00\x00";
@@ -134,6 +149,7 @@ my $e_phnum = "\x01\x00";						#Count of Program Headers
 my $e_shentsize = "\x28\x00";					#Size of a single Section Header (probably static)
 my $e_shnum = "\x03\x00";						#Count of Section Headers
 my $e_shstrndx = "\x02\x00";					#Index of the names' section in the table
+#A few values need changing if we allocate memory with .bss segment (offsets and stuff)
 if ($memory_size > 0) {
 	$e_shnum = "\x04\x00";
 	$e_shstrndx = "\x03\x00";
@@ -141,18 +157,18 @@ if ($memory_size > 0) {
 	$e_entry = "\x80\x00\x00\x08";	
 }
 
-#Change entry point if user wants this
+#Change entry point if user wants this, it is not a specific address; it's a number of bytes to add to the current entry offset
 if ($entry > 0) {
 	$entry += 134217824;
 	$e_entry = printhex_32($entry);
 }
 
-#Calculate e_shoff size
-$e_shoff = length($code . $section_names) + 96;
+#Calculate e_shoff size (Section Header offset)
+$e_shoff = length($code . $section_names) + 96;	#section names + code + 96 bytes of fixed size ELF headers
 if ($memory_size > 0) {
-	$e_shoff += 32;
+	$e_shoff += 32;								#32 bytes of extra header info if we have .bss
 }
-$e_shoff = printhex_32($e_shoff);
+$e_shoff = printhex_32($e_shoff);				#format this number to intel-endian 4-byte value
 
 #Build ELF Header
 my $ELF_header = $e_ident_EI_MAG . $e_ident_EI_CLASS_DATA . $e_ident_EI_VERSION . ("\x00" x 6) . $e_type . $e_machine . $e_version . 
@@ -161,6 +177,7 @@ $e_entry . $e_phoff . $e_shoff . ("\x00" x 4) . $e_ehsize . $e_phentsize . $e_ph
 #-------------------------combine everything--------------------------------------
 my $output = $ELF_header . $program_header_table . $code . $section_names . $sections;
 
+#write all of this to our file
 open FILE, ">$out" or die "Couldn't open $out, $!\n";
 print FILE $output;		#send it out
 close FILE;
