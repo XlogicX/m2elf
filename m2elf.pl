@@ -198,12 +198,12 @@ sub convert {
 	my $temp_code = '';
 	$code =~ s/(.*)(#|\/\/|'|\-\-).*/$1/g;	#remove comments
 	#Find 8-bit binary strings and convert to ascii-hex
-	while ($code =~ /[^01]([01]{8})[^01]/) {
+	while ($code =~ /_([01]{8})[^01]/) {
 		my $replacement = sprintf('%X', oct("0b$1"));
 		if (length($replacement) == 1) {
 			$replacement = "0" . $replacement;
 		}
-		$code =~ s/([^01])[01]{8}([^01])/$1 $replacement $2/;
+		$code =~ s/_[01]{8}([^01])/$replacement $1/;
 	}
 	$code =~ s/\s//g;						#remove spaces
 
