@@ -23,6 +23,6 @@ Example Source Files
 
 Source File Syntax
 =====
-The source file can include ascii hex and binary byte by byte. Spacing between hex bytes not a requirment, but could reduce bugs (4 hex bytes could look like binary to m2elf if the hex is only 1's and 0's). In order for a binary byte to be interpreted as such, it needs to be consecutive 1's and 0's with no 1's or 0's surrounding it.
+The source file can include ascii hex and binary byte by byte. Spacing between hex bytes not a requirment, but could reduce bugs (4 hex bytes could look like binary to m2elf if the hex is only 1's and 0's). In order for a binary byte to be interpreted as such, it needs to be a series of 8 1's and 0's preceded by an underscore, i.e. _01011000
 
 Valid comments include #, //, ', and --
