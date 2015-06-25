@@ -20,7 +20,7 @@ Example Source Files
 =====
 * hello.m - written in machine code, prints hello world. Use --mem 16
 * hello.b - same as above, but written in pure 1's and 0's :)
-* Spawnshell.m - shellcode from: http://phrack.org/issues/49/14.html#article, the difference with this .m file is that each instruction is commented. To get this to actually run, the p_flags byte for the .text section header needs to be changed from a 5 (read/execute) to 6 (read/write/execute). I just did this with a hex editor, but I may add this ability as a command line option (as it allows the cool feature of self modifying code).
+* Spawnshell.m - shellcode from: http://phrack.org/issues/49/14.html#article, the difference with this .m file is that each instruction is commented. To get this to actually run, the --writeover argument must be used.
 
 Source File Syntax
 =====
