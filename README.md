@@ -14,7 +14,6 @@ Options:<br>
 --writeover - changes the r-x of the .text to rwx; now you can have self modifying codes
 
 m2elf --in source_file.m --out executable_file --mem 100<br>
-(chmod 755 executable_file)
 
 Example Source Files
 =====
