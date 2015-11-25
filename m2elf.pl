@@ -181,6 +181,7 @@ my $output = $ELF_header . $program_header_table . $code . $section_names . $sec
 open FILE, ">$out" or die "Couldn't open $out, $!\n";
 print FILE $output;		#send it out
 close FILE;
+chmod(0755, $out) or die "Couldn't change the permission to $out: $!";
 
 #This sub takes an integer and converts it into it's 32-bit intel-endian form
 sub printhex_32 {
