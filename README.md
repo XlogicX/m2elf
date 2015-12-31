@@ -10,7 +10,7 @@ Options:<br>
 --out (output file)<br>
 --binary (if the input is already binary form)<br>
 --mem (bytes)<br>
---entry (This changes the entry point, it adds to the offset whichever decimal number is provided)
+--entry (This changes the entry point, it adds to the offset whichever decimal number is provided) <br>
 --writeover - changes the r-x of the .text to rwx; now you can have self modifying codes
 
 m2elf --in source_file.m --out executable_file --mem 100<br>
