@@ -41,7 +41,7 @@ if ($interactive eq 1){
 			last if ($code =~ /(exit|quit)/i);
 			convert();
 			payload();
-			$result = `objdump -d tmp`;
+			$result = `objdump -M intel -d tmp`;
 			$result =~ s/^.+?<>:\n(.+)\s\.\.\..+$/$1/s;
 			print "$result\n";
 		}
