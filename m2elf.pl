@@ -5,6 +5,7 @@
 use warnings;
 use strict;
 use Getopt::Long;
+use Term::ANSIColor;
 
 my ($in, $binary, $hex, $code);
 my $out = "out";
@@ -15,6 +16,9 @@ my $writeover = 0;
 my $help = 0;
 my $interactive = 0;
 my $flavor = "intel";
+my $colorize = 0;
+
+sub colorize($);
 
 GetOptions('in=s' => \$in,
 'out=s' => \$out,
@@ -23,7 +27,8 @@ GetOptions('in=s' => \$in,
 'entry=s' => \$entry,
 'writeover' => \$writeover,
 'interactive' => \$interactive,
-'flavor' => \$flavor,
+'flavor=s' => \$flavor,
+'colorize' => \$colorize,
 'help' => \$help);
 
 if ($help eq 1){
@@ -41,12 +46,17 @@ if ($interactive eq 1){
 		while (1) {
 			print "m2elf > ";
 			$code = <STDIN>;
-			last if ($code =~ /(exit|quit)/i);
+            		next if ($code =~ /^$/);
+			last if ($code =~ /(exit|q(?:uit)*)/i);
 			convert();
 			payload();
 			$result = `objdump -M $flavor -d tmp`;
 			$result =~ s/^.+?<>:\n(.+)\s\.\.\..+$/$1/s;
-			print "$result\n";
+			if ($colorize) {
+                		print colorize($result), "\n";
+            		} else {
+               			print "$result\n";
+            		}
 		}
 		system('rm tmp')
 	}
@@ -246,7 +256,24 @@ sub convert {
 		$code =~ s/^..//;
 	}
 	$code = $temp_code;
+}
 
+sub colorize($) {
+    my $code = shift || return undef;
+    my($addr, $opcode, $inst, $operands) = $code =~ m/^[\s\t]*(\d+)\:[\s\t]+((?:[\da-f]+\s)+)[\s\t]+([a-z]+)\s*(.*)$/gi;
+    my($green, $yellow, $blue, $red, $reset) = (color('green'), color('yellow'), color('blue'), color('red'), color('reset'));
+    
+    return undef unless (defined $addr);
+    $code =~ s/$addr/$green$addr$reset/;
+    $code =~ s/$opcode/$yellow$opcode$reset/;
+    $code =~ s/$inst/$blue$inst$reset/;
+    if (defined $operands) {
+        $operands =~ s/([\[\]\(\)+\-*\$])/\\$1/g;
+        $code =~ s/$operands/$red$operands$reset/;
+        $code =~ s/\\//g;
+    }
+
+    return $code;
 }
 
 sub help {
@@ -259,10 +286,13 @@ print "\tThis script takes ascii-hex, space delimited chunks of 8 1' and 0's, or
 print "OPTIONS\n";
 print "\t--in: specify your source file after this\n";
 print "\t--out: specify the name you want your executable file to be\n";
+print "\t--interactive: use interactive mode\n";
 print "\t--binary: if your file is raw (binary file with unprintables; already machine code), then supply this option. This option is great for extractions from pcaps\n";
 print "\t--mem: specify how many bytes of memory you want after this option, it will map starting at offset 0x06000000\n";
 print "\t--entry: you can change the entry point. The default is 0x08000060. Whichever number you specify, will add that amount of bytes to the default offset. It will not shift the beginning of your code to that offset, however. For example, if you supply --entry 16, add 16 NOPs to the begginning of your original code and it will function as if you didn't add the --entry 16 and the NOPs\n";
-print "\t--writeover: changes the r-x of the .text to rwx; now you can have self modifying codes\n\n";
+print "\t--writeover: changes the r-x of the .text to rwx; now you can have self modifying codes\n";
+print "\t--flavor: flavor of output, default is 'intel' syntax (man objdump for a list of syntax flavors)\n";
+print "\t--colorize: colorize output\n\n";
 print "EXAMPLES\n";
 print "\tSOURCE:\n";
 print "\tb8\t21 0a 00 00\t#moving '!\\n' into eax\n";
