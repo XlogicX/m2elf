@@ -29,8 +29,9 @@ if ($help eq 1){
 }
 
 if ($interactive eq 1){
-	my $result = `objdump -v 2> /dev/null`;
-	if ($result !~ /objdump/i) {
+	my $result;
+	qx{which objdump 2>&1};
+	if ($? > 0) {
 		print "This system needs 'objdump' installed in order to run 'interactive' mode\n";
 	} else {
 		$code = '';
