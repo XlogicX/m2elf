@@ -14,6 +14,7 @@ my $entry = 0;
 my $writeover = 0;
 my $help = 0;
 my $interactive = 0;
+my $flavor = "intel";
 
 GetOptions('in=s' => \$in,
 'out=s' => \$out,
@@ -22,6 +23,7 @@ GetOptions('in=s' => \$in,
 'entry=s' => \$entry,
 'writeover' => \$writeover,
 'interactive' => \$interactive,
+'flavor' => \$flavor,
 'help' => \$help);
 
 if ($help eq 1){
@@ -42,7 +44,7 @@ if ($interactive eq 1){
 			last if ($code =~ /(exit|quit)/i);
 			convert();
 			payload();
-			$result = `objdump -M intel -d tmp`;
+			$result = `objdump -M $flavor -d tmp`;
 			$result =~ s/^.+?<>:\n(.+)\s\.\.\..+$/$1/s;
 			print "$result\n";
 		}
